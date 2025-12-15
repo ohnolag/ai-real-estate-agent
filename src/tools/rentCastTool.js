@@ -6,7 +6,9 @@ const CALL_API_FLAG = true;
 export function makeRentCastToolSchema({
     zipCode=false,
     price=false,
-    squareFootage=false
+    squareFootage=false,
+    bedrooms=false,
+    propertyType=false
 }={}) {
     let properties = {};
 
@@ -40,6 +42,25 @@ export function makeRentCastToolSchema({
         };
     }
 
+    if(bedrooms){
+        properties.minimum_bedrooms = {
+            "type": "number",
+            "description": "Minimum number of bedrooms"
+        };
+        properties.maximum_bedrooms = {
+            "type": "number",
+            "description": "Maximum number of bedrooms"
+        };
+    }
+
+    if(propertyType){
+        properties.property_type = {
+            "type": "string",
+            "enum": ["Single Family", "Condo", "Townhouse", "Multi-Family", "Apartment", "Land", "Manufactured"],
+            "description": "Type of property"
+        };
+    }
+
     //TODO: add strict mode enforcement
     return{
         "type": "function",
@@ -60,12 +81,17 @@ function serializeParams(params){
         minimum_price,
         maximum_price,
         minimum_square_footage,
-        maximum_square_footage
+        maximum_square_footage,
+        minimum_bedrooms,
+        maximum_bedrooms,
+        property_type
     } = params;
 
     //helper to convert min/max to API range format
     function convertToRange(min, max){
-        return `${min ?? '*'}:${max ?? '*'}`;
+        const minPart = min == null ? '*' : min - 0.1;
+        const maxPart = max == null ? '*' : max + 0.1;
+        return `${minPart}:${maxPart}`;
     }
 
     let url = new URL('https://api.rentcast.io/v1/listings/sale?limit=500&status=Active');
@@ -78,6 +104,12 @@ function serializeParams(params){
     }
     if (minimum_square_footage != null || maximum_square_footage != null) { 
         url.searchParams.set("squareFootage", convertToRange(minimum_square_footage, maximum_square_footage));
+    }
+    if (minimum_bedrooms != null || maximum_bedrooms != null) { 
+        url.searchParams.set("bedrooms", convertToRange(minimum_bedrooms, maximum_bedrooms));
+    }
+    if (property_type) {
+        url.searchParams.set("propertyType", property_type);
     }
 
     console.log("constructed URL:", url);
@@ -104,12 +136,24 @@ async function getListingsRentCast(url) {
 }
 
 //optimize API response for LLM consumption
-function deserializeListings(data) {
-    return data;
+function deserializeListings(res) {
+    //console.log("deserializing data:", res);
+    if(res.error){
+        return { error: res.error };
+    }
+    return res.data.map(listing => ({
+        "address": listing.formattedAddress,
+        "property_type": listing.propertyType,
+        "price": listing.price,
+        "bedrooms": listing.bedrooms,
+        "bathrooms": listing.bathrooms,
+        "square_footage": listing.squareFootage,
+        "lot_size": listing.lotSize,
+    }));
 }
 
 export async function rentCastTool(params) {
     const url = serializeParams(params);
-    const data  = await getListingsRentCast(url)
-    return deserializeListings(data);
+    const res  = await getListingsRentCast(url)
+    return deserializeListings(res);
 }
