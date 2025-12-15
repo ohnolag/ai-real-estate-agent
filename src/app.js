@@ -1,4 +1,15 @@
-import { getListingsRentCast, makeRentCastToolSchema } from "./tools/rentCastTool.js";
+import { rentCastTool, makeRentCastToolSchema } from "./tools/rentCastTool.js";
 
-console.log(makeRentCastToolSchema({zipCode:true, price:true, squareFootage:true}));
-console.log(makeRentCastToolSchema({zipCode:true, price:true, squareFootage:true}).parameters.properties);
+const testParams = {
+    zip_code: "94103",
+    minimum_price: 500000,
+    minimum_square_footage: 800,
+    maximum_square_footage: 2000
+};
+
+async function testRentCastTool() {
+    const listings = await rentCastTool(testParams);
+    console.log("Listings:", listings);
+}
+
+testRentCastTool();

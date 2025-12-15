@@ -1,5 +1,8 @@
 import 'dotenv/config';
 
+const CALL_API_FLAG = true;
+
+//generate JSON schema for RentCast tool
 export function makeRentCastToolSchema({
     zipCode=false,
     price=false,
@@ -65,14 +68,16 @@ function serializeParams(params){
         return `${min ?? '*'}:${max ?? '*'}`;
     }
 
-    const url = 'https://api.rentcast.io/v1/listings/sale?limit=500&status=Active';
+    let url = new URL('https://api.rentcast.io/v1/listings/sale?limit=500&status=Active');
     //add search params
-    if (zip_code) { url += `&zipCode=${zip_code}`; }
+    if (zip_code) { 
+        url.searchParams.set("zipCode", zip_code); 
+    }
     if (minimum_price != null || maximum_price != null) { 
-        url += `&price=${convertToRange(minimum_price, maximum_price)}`;
+        url.searchParams.set("price", convertToRange(minimum_price, maximum_price));
     }
     if (minimum_square_footage != null || maximum_square_footage != null) { 
-        url += `&squareFootage=${convertToRange(minimum_square_footage, maximum_square_footage)}`;
+        url.searchParams.set("squareFootage", convertToRange(minimum_square_footage, maximum_square_footage));
     }
 
     console.log("constructed URL:", url);
@@ -81,8 +86,9 @@ function serializeParams(params){
 
 //call the RentCast API to get listings
 async function getListingsRentCast(url) { 
+    const key = CALL_API_FLAG ? process.env.RENT_CAST_API_KEY : 0;
 
-    const options = {method: 'GET', headers: {accept: 'application/json', 'X-Api-Key': process.env.RENT_CAST_API_KEY}};
+    const options = {method: 'GET', headers: {accept: 'application/json', 'X-Api-Key': key}};
 
     try{
         console.log("fetch called");
@@ -103,7 +109,7 @@ function deserializeListings(data) {
 }
 
 export async function rentCastTool(params) {
-    return serializeParams(params)
-    .then(getListingsRentCast)
-    .then(deserializeListings);
+    const url = serializeParams(params);
+    const data  = await getListingsRentCast(url)
+    return deserializeListings(data);
 }
