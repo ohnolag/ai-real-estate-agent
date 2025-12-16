@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { log } from '../log.js';
 
-const CALL_API = process.env.CALL_API;
+const CALL_API = process.env.CALL_API === 'true';
 const LISTINGS_PER_REQUEST = process.env.LISTINGS_PER_REQUEST;
 
 //generate JSON schema for RentCast tool
@@ -14,54 +14,63 @@ export function makeRentCastToolSchema({
     propertyType=false
 }={}) {
     let properties = {};
+    let required = [];
 
     if(zipCode){
         properties.zip_code = {
-            "type": "string",
+            "type": ["string", "null"],
             "pattern": "^[0-9]{5}$",
             "description": "The five-digit US ZIP code to search for listings"
         }
+        required.push("zip_code");
     }
 
     if(squareFootage){
         properties.minimum_square_footage = {
-            "type": "number",
+            "type": ["number", "null"],
             "description": "Minimum interior square footage of the listing"
         };
         properties.maximum_square_footage = {
-            "type": "number",
+            "type": ["number", "null"],
             "description": "Maximum interior square footage of the listing"
         };
+        required.push("minimum_square_footage");
+        required.push("maximum_square_footage");
     }
 
     if(price){
         properties.minimum_price = {
-            "type": "number",
+            "type": ["number", "null"],
             "description": "Minimum listing price in USD"
         };
         properties.maximum_price = {
-            "type": "number",
+            "type": ["number", "null"],
             "description": "Maximum listing price in USD"
         };
+        required.push("minimum_price");
+        required.push("maximum_price");
     }
 
     if(bedrooms){
         properties.minimum_bedrooms = {
-            "type": "number",
+            "type": ["number", "null"],
             "description": "Minimum number of bedrooms"
         };
         properties.maximum_bedrooms = {
-            "type": "number",
+            "type": ["number", "null"],
             "description": "Maximum number of bedrooms"
         };
+        required.push("minimum_bedrooms");
+        required.push("maximum_bedrooms");
     }
 
     if(propertyType){
         properties.property_type = {
-            "type": "string",
+            "type": ["string", "null"],
             "enum": ["Single Family", "Condo", "Townhouse", "Multi-Family", "Apartment", "Land", "Manufactured"],
             "description": "Type of property"
         };
+        required.push("property_type");
     }
 
     //TODO: add strict mode enforcement
@@ -69,9 +78,11 @@ export function makeRentCastToolSchema({
         "type": "function",
         "name": "get_listings",
         "description": "Retrieves a list of active real estate property listings",
+        "strict": true,
         "parameters": {
             "type": "object",
             properties,
+            "required": required,
             "additionalProperties": false
         },
     }
