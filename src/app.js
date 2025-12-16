@@ -1,4 +1,5 @@
 import { rentCastTool, makeRentCastToolSchema } from "./tools/rentCastTool.js";
+import { testAI } from "./services/GPTAgent.js";
 
 const testParams = {
     zip_code: "94103",
@@ -12,4 +13,6 @@ async function testRentCastTool() {
     console.log("Listings:", listings);
 }
 
-testRentCastTool();
+//testRentCastTool();
+
+testAI("Find me a condo to buy in San Francisco with at least 2 bedrooms and 1000 square feet.");
