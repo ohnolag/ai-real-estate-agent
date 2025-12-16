@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 const CALL_API_FLAG = true;
+const LISTINGS_PER_REQUEST = 5;
 
 //generate JSON schema for RentCast tool
 export function makeRentCastToolSchema({
@@ -89,12 +90,12 @@ function serializeParams(params){
 
     //helper to convert min/max to API range format
     function convertToRange(min, max){
-        const minPart = min == null ? '*' : min - 0.1;
+        const minPart = min == null ? '*' : (min != 0 ? min - 0.1 : 0);
         const maxPart = max == null ? '*' : max + 0.1;
         return `${minPart}:${maxPart}`;
     }
 
-    let url = new URL('https://api.rentcast.io/v1/listings/sale?limit=500&status=Active');
+    let url = new URL(`https://api.rentcast.io/v1/listings/sale?limit=${LISTINGS_PER_REQUEST}&status=Active`);
     //add search params
     if (zip_code) { 
         url.searchParams.set("zipCode", zip_code); 
