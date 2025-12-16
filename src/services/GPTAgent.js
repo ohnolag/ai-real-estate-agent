@@ -4,7 +4,7 @@ import { makeRentCastToolSchema, rentCastTool } from '../tools/rentCastTool.js';
 
 import OpenAI from 'openai';
 
-const TOOL_CALL_LIMIT = 1;
+const TOOL_CALL_LIMIT = process.env.TOOL_CALL_LIMIT;
 
 const client = new OpenAI();
 

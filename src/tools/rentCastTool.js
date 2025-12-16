@@ -1,7 +1,9 @@
 import 'dotenv/config';
 
-const CALL_API_FLAG = true;
-const LISTINGS_PER_REQUEST = 5;
+import { log } from '../log.js';
+
+const CALL_API = process.env.CALL_API;
+const LISTINGS_PER_REQUEST = process.env.LISTINGS_PER_REQUEST;
 
 //generate JSON schema for RentCast tool
 export function makeRentCastToolSchema({
@@ -113,32 +115,34 @@ function serializeParams(params){
         url.searchParams.set("propertyType", property_type);
     }
 
-    console.log("constructed URL:", url);
+    log(4, "RentCast call", url);
     return url;
 }
 
 //call the RentCast API to get listings
 async function getListingsRentCast(url) { 
-    const key = CALL_API_FLAG ? process.env.RENT_CAST_API_KEY : 0;
+    const key = CALL_API ? process.env.RENT_CAST_API_KEY : 0;
 
     const options = {method: 'GET', headers: {accept: 'application/json', 'X-Api-Key': key}};
 
     try{
-        console.log("fetch called");
+        log(4, "RentCast called");
         const res = await fetch(url, options);
-        console.log("response received");
+        log(4, "Rent Cast response received");
         if (!res.ok) {
+            log(2, `RentCast API error: HTTP ${res.status}`);
             return { error: `HTTP ${res.status}` };
         }
         return { data: await res.json() };
     } catch (error) {
+        log(2, `RentCast API error: ${error.message}`);
         return { error: error.message };
     }
 }
 
 //optimize API response for LLM consumption
 function deserializeListings(res) {
-    //console.log("deserializing data:", res);
+    log(5, "deserializing Rent Cast data", res);
     if(res.error){
         return { error: res.error };
     }
@@ -156,5 +160,7 @@ function deserializeListings(res) {
 export async function rentCastTool(params) {
     const url = serializeParams(params);
     const res  = await getListingsRentCast(url)
-    return deserializeListings(res);
+    const data = deserializeListings(res);
+    log(4, "RentCast tool data", data);
+    return data;
 }

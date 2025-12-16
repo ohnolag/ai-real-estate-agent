@@ -15,4 +15,4 @@ async function testRentCastTool() {
 
 //testRentCastTool();
 
-testAI("Find me a condo to buy in San Francisco with at least 2 bedrooms and 1000 square feet.");
+testAI("Find me a condo to buy in a nice neighborhood in Los Angeles with at least 2 bedrooms and 1000 square feet.");
