@@ -16,3 +16,14 @@ export function log(level, description, message=null) {
         logStream.write(`[${timestamp}] ${description} \n-----\n${message}\n-----\n`):
         logStream.write(`[${timestamp}] ${description}\n-----\n`);
 }
+
+export async function logChat(message) {
+    await fs.promises.writeFile(
+        "chat.log",
+        JSON.stringify(message, null, 2)
+    );
+}
+
+export async function readChat() {
+    return await fs.promises.readFile("chat.log", "utf8");
+}

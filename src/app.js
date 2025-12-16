@@ -1,18 +1,12 @@
 import { rentCastTool, makeRentCastToolSchema } from "./tools/rentCastTool.js";
-import { testAI } from "./services/GPTAgent.js";
+import { chat } from "./services/GPTAgent.js";
+import { readChat, logChat } from "./utils.js";
 
-const testParams = {
-    zip_code: "94103",
-    minimum_price: 1000000,
-    minimum_square_footage: 800,
-    maximum_square_footage: 2000
-};
+//await logChat([{ role: "user", content: "find me a one bedroom condo in a nice neighborhood in Los Angeles with at least 1000 square feet." }]);
 
-async function testRentCastTool() {
-    const listings = await rentCastTool(testParams);
-    console.log("Listings:", listings);
-}
+let raw = await readChat();
+let input = JSON.parse(raw);
 
-//testRentCastTool();
+console.log(input);
 
-testAI("Find me a condo to buy in a nice neighborhood in Los Angeles with at least 2 bedrooms and 1000 square feet.");
+await logChat(await chat(input));

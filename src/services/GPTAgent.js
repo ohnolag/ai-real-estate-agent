@@ -5,6 +5,7 @@ import { makeRentCastToolSchema, rentCastTool } from '../tools/rentCastTool.js';
 import OpenAI from 'openai';
 
 const TOOL_CALL_LIMIT = process.env.TOOL_CALL_LIMIT;
+const MODEL = process.env.CHATGPT_MODEL;
 
 const client = new OpenAI();
 
@@ -16,32 +17,30 @@ const tools = [ makeRentCastToolSchema({
     propertyType: true
 })];
 
-export async function testAI(prompt) {
-    let input = [
-        { role: "user", content: prompt },
-    ];
-
-    let response = await client.responses.create({
-        model: "gpt-5-mini",
-        instructions:`
+const instructions = `
             You are a helpful real estate assistant.
 
             Use the available tools to find real estate listings
             based on user criteria.
 
             Follow these rules:
-            - Call at most ${TOOL_CALL_LIMIT} tool per request
-            - Do not ask clarifying questions, if the user request is ambiguous, make your best guess
-            `,
+            - call get_listings at most ${TOOL_CALL_LIMIT} times per request
+            - if the user request is ambiguous, make your best guess
+            - you must specify a location parameter for all get_listings calls
+            - only report listings that were retrieved using the get_listings tool
+`;
+
+export async function chat(input) {
+    let response = await client.responses.create({
+        model: MODEL,
+        instructions,
         input,
         tools,
     });
 
-    console.log(JSON.stringify(response.output, null, 2));
+    input = [...input, ...response.output];
 
-    input.push(...response.output);
-
-    await Promise.all(
+     await Promise.all(
         response.output
         .filter(item => item.type === 'function_call' && item.name === 'get_listings')
         .map(async (call, index) => {
@@ -57,19 +56,5 @@ export async function testAI(prompt) {
         })
     );
 
-    console.log(JSON.stringify(input, null, 2));
-
-    response = await client.responses.create({
-        model: "gpt-5-mini",
-        instructions:`
-            You are a helpful real estate assistant.
-
-            Follow these rules:
-            - Respond only with the final answer to the user's request
-            - Respond only with listings that were retrieved using the tool
-            `,
-        input
-    });
-
-    console.log(JSON.stringify(response.output, null, 2));
+    return input;
 }

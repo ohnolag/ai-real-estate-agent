@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { log } from '../log.js';
+import { log } from '../utils.js';
 
 const CALL_API = process.env.CALL_API === 'true';
 const LISTINGS_PER_REQUEST = process.env.LISTINGS_PER_REQUEST;
